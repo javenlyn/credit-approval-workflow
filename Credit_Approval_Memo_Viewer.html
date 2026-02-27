@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Credit Approval Memorandum — Categorized Workflow — Role + LLM Capability</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0c0f14;
+    --surface: #151920;
+    --surface2: #1c2129;
+    --border: #2a3040;
+    --text: #e2e6ed;
+    --text-dim: #8892a4;
+    --accent: #4a9eff;
+    --accent-glow: rgba(74,158,255,0.15);
+    --desk: #E69F00;
+    --compliance: #CC79A7;
+    --credit: #0072B2;
+    --capital: #009E73;
+    --system: #F0E442;
+    --legal: #D55E00;
+    --mktRisk: #56B4E9;
+    --ops: #999999;
+    --committee: #666666;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: 260px;
+    height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-header {
+    padding: 20px 16px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-header h2 {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .sidebar-header p {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  /* Legend */
+  .legend { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .legend-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-dim);
+    padding: 3px 0;
+  }
+  .legend-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    border: 1px solid rgba(255,255,255,0.1);
+    flex-shrink: 0;
+  }
+
+  /* Phase list */
+  .phase-list { padding: 10px 0; flex: 1; overflow-y: auto; }
+  .phase-list-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    padding: 6px 16px;
+  }
+  .phase-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 16px;
+    font-size: 12px;
+    color: var(--text-dim);
+    cursor: default;
+  }
+  .phase-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    background: var(--border);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+
+  /* Controls */
+  .sidebar-controls {
+    padding: 14px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Zoom controls */
+  .zoom-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .zoom-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    min-width: 36px;
+  }
+  .zoom-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .zoom-btn:hover {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .zoom-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    min-width: 42px;
+    text-align: center;
+  }
+  .zoom-presets {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+  }
+  .zoom-preset {
+    padding: 3px 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-dim);
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .zoom-preset:hover, .zoom-preset.active {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Action buttons */
+  .action-row {
+    display: flex;
+    gap: 6px;
+  }
+  .action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 7px 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .action-btn:hover {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .action-btn.copied {
+    background: rgba(0,158,115,0.15);
+    border-color: var(--capital);
+    color: var(--capital);
+  }
+  .action-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+  /* ── MAIN CHART AREA ── */
+  .main {
+    margin-left: 260px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Top bar */
+  .top-bar {
+    padding: 14px 24px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+  .top-bar h1 {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .top-bar .tag {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .top-bar .hint {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+  .top-bar .hint kbd {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+  }
+
+  /* Chart viewport */
+  .chart-viewport {
+    flex: 1;
+    overflow: auto;
+    background: var(--bg);
+    cursor: grab;
+    position: relative;
+  }
+  .chart-viewport:active { cursor: grabbing; }
+  .chart-viewport.fullscreen {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 200;
+    margin: 0;
+  }
+
+  .chart-inner {
+    padding: 32px;
+    display: inline-block;
+    min-width: 100%;
+    min-height: 100%;
+    transform-origin: 0 0;
+  }
+
+  .mermaid svg {
+    display: block;
+  }
+
+  /* Fullscreen overlay indicator */
+  .fs-indicator {
+    display: none;
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    padding: 8px 16px;
+    background: rgba(21,25,32,0.9);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-dim);
+    font-size: 12px;
+    z-index: 201;
+    backdrop-filter: blur(8px);
+  }
+  .fs-indicator kbd {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+  }
+  .chart-viewport.fullscreen ~ .fs-indicator,
+  .fullscreen .fs-indicator { display: block; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+  ::-webkit-scrollbar-corner { background: var(--surface); }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h2>Categorized Workflow</h2>
+    <p>Credit Approval Memorandum<br>Securities Lending — Borrower Onboarding<br>All 8 Phases — Dual-Coded<br><em>Created by Jim Lin</em></p>
+  </div>
+
+  <div class="legend">
+    <div class="legend-title">Team Ownership (Fill)</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#E69F00"></div>Trading Desk / Business</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#CC79A7"></div>Compliance / KYC / AML</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#0072B2"></div>Credit Risk / SCO</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#009E73"></div>Capital Management</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#F0E442"></div>System / Automated</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#D55E00"></div>Legal (Sec Lending)</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#56B4E9"></div>Market Risk / Quant</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#999999"></div>Operations / Collateral Mgmt</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#666666"></div>Credit Committee</div>
+  </div>
+
+  <div class="legend" style="border-bottom: 1px solid var(--border);">
+    <div class="legend-title">LLM Capability (Border)</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#1a1a2e; border: 3px solid #2ECC40; box-sizing: border-box;"></div>Fully LLM-Capable</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#1a1a2e; border: 3px solid #FFBF00; box-sizing: border-box;"></div>Hybrid (LLM + Human)</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#1a1a2e; border: 3px solid #CC0000; box-sizing: border-box;"></div>Human Only</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#1a1a2e; border: 3px solid #888888; box-sizing: border-box;"></div>External Dependency</div>
+    <div style="margin-top: 10px; font-size: 11px; color: #aaa; line-height: 1.4;">
+      GREEN 29% · YELLOW 34% · RED 34% · GRAY 2%<br/>
+      93 nodes categorized
+    </div>
+  </div>
+
+  <div class="phase-list">
+    <div class="phase-list-title">Phases</div>
+    <div class="phase-item"><span class="phase-num">1</span> Initiation &amp; Screening</div>
+    <div class="phase-item"><span class="phase-num">2</span> Due Diligence &amp; KYC</div>
+    <div class="phase-item"><span class="phase-num">3</span> Financial &amp; Credit Analysis</div>
+    <div class="phase-item"><span class="phase-num">4</span> Legal &amp; Documentation</div>
+    <div class="phase-item"><span class="phase-num">5</span> Collateral &amp; Exposure</div>
+    <div class="phase-item"><span class="phase-num">6</span> Memo Drafting</div>
+    <div class="phase-item"><span class="phase-num">7</span> Committee Review</div>
+    <div class="phase-item"><span class="phase-num">8</span> Post-Approval Activation</div>
+  </div>
+
+  <div class="sidebar-controls">
+    <div class="zoom-row">
+      <span class="zoom-label">Zoom</span>
+      <button class="zoom-btn" onclick="zoomOut()" title="Zoom out (-)">−</button>
+      <span class="zoom-value" id="zoomDisplay">100%</span>
+      <button class="zoom-btn" onclick="zoomIn()" title="Zoom in (+)">+</button>
+    </div>
+    <div class="zoom-row" style="justify-content:center;">
+      <button class="zoom-preset" onclick="setZoom(50)">50%</button>
+      <button class="zoom-preset" onclick="setZoom(75)">75%</button>
+      <button class="zoom-preset active" onclick="setZoom(100)">100%</button>
+      <button class="zoom-preset" onclick="setZoom(150)">150%</button>
+      <button class="zoom-preset" onclick="setZoom(200)">200%</button>
+    </div>
+    <div class="action-row">
+      <button class="action-btn" id="copyBtn" onclick="copyMermaid()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy
+      </button>
+      <button class="action-btn" onclick="toggleFullscreen()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg>
+        Fullscreen
+      </button>
+    </div>
+    <div class="action-row">
+      <button class="action-btn" onclick="resetView()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 109-9"/><path d="M3 3v6h6"/></svg>
+        Reset View
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<div class="main">
+  <div class="top-bar">
+    <h1>Credit Approval Memorandum — Full Workflow</h1>
+    <span class="tag">8 Phases</span>
+    <span class="tag">Categorized</span>
+    <span class="tag">v0.4</span>
+    <span class="hint">Scroll to pan &bull; <kbd>Ctrl</kbd>+Scroll to zoom &bull; <kbd>Esc</kbd> exit fullscreen</span>
+  </div>
+
+  <div class="chart-viewport" id="chartViewport">
+    <div class="chart-inner" id="chartInner">
+      <div class="mermaid" id="mainChart">
+flowchart LR
+
+%% ============================================================
+%% CREDIT APPROVAL MEMORANDUM — CONDENSED + LLM-CATEGORIZED
+%% Securities Lending: Onboarding a New Borrower Counterparty
+%% All 8 Phases — Condensed Labels + LLM Capability Stroke Coding
+%% Created by Jim Lin
+%% ============================================================
+
+%% ============================================================
+%% PHASE 1: Initiation, Screening & Commercial Viability
+%% ============================================================
+
+subgraph P1["Phase 1: Initiation, Screening & Commercial Viability"]
+
+    subgraph P1A["Counterparty Intake"]
+        Trigger(["TRIGGER: Desk identifies<br/>prospective borrower"])
+        Desk_SubmitRequest["Trading Desk: Submit<br/>onboarding request<br/>(LEI, jurisdiction, activity,<br/>asset classes, fee estimates)"]
+        Desk_SystemValidation["System: Validate<br/>intake form completeness"]
+    end
+
+    subgraph P1B["Automated Pre-Screening"]
+        Comp_AutoScreen["Compliance System: Automated<br/>AML/KYC pre-screening<br/>(sanctions, adverse media,<br/>regulatory status)"]
+        Decision_Screening{"Pre-screening<br/>result?"}
+        Comp_Escalation["Sr Compliance: Review<br/>hard stop finding"]
+        Comp_FlagEDD["Compliance: Flag for<br/>Enhanced Due Diligence"]
+    end
+
+    subgraph P1C["Counterparty Classification"]
+        Credit_Classify["Credit Risk: Classify<br/>counterparty type per<br/>firm taxonomy"]
+    end
+
+    subgraph P1D["Commercial Viability & Risk Appetite"]
+
+        subgraph Track1["Track 1: Commercial Viability"]
+            CapMgmt_CalcRWA["Capital Mgmt: Calculate<br/>preliminary RWA (SA-CCR)"]
+            Desk_CommercialCase["Business Mgr: Assemble<br/>commercial case (revenue,<br/>RWA return, hurdle rate)"]
+        end
+
+        subgraph Track2["Track 2: Risk Appetite"]
+            Credit_AppetiteCheck["Credit Risk: Risk appetite<br/>check — entity type within<br/>approved framework?"]
+        end
+
+    end
+
+    subgraph P1E["Go / No-Go Decision"]
+        Decision_Proceed{"Proceed to<br/>full analysis?"}
+        End_Closed_Screen(["CLOSED: Screening<br/>hard stop"])
+        End_Closed_Commercial_P1(["CLOSED: Commercial<br/>case not viable"])
+        End_Closed_Appetite(["CLOSED: Outside<br/>risk appetite"])
+        Launch_Parallel["LAUNCH: Phases 2, 3 & 4<br/>in parallel"]
+    end
+
+end
+
+%% Phase 1 connections
+Trigger --> Desk_SubmitRequest
+Desk_SubmitRequest --> Desk_SystemValidation
+Desk_SystemValidation --> Comp_AutoScreen
+Comp_AutoScreen --> Decision_Screening
+Decision_Screening -->|"RED: Hard stop"| Comp_Escalation
+Comp_Escalation --> End_Closed_Screen
+Decision_Screening -->|"AMBER: Flags"| Comp_FlagEDD
+Decision_Screening -->|"GREEN: Clear"| Credit_Classify
+Comp_FlagEDD --> Credit_Classify
+Credit_Classify --> CapMgmt_CalcRWA
+Credit_Classify --> Credit_AppetiteCheck
+CapMgmt_CalcRWA --> Desk_CommercialCase
+Desk_CommercialCase --> Decision_Proceed
+Credit_AppetiteCheck --> Decision_Proceed
+Decision_Proceed -->|"Commercial case fails"| End_Closed_Commercial_P1
+Decision_Proceed -->|"Outside risk appetite"| End_Closed_Appetite
+Decision_Proceed -->|"All conditions met"| Launch_Parallel
+
+%% ============================================================
+%% PHASE 2: Due Diligence & KYC
+%% ============================================================
+
+subgraph P2["Phase 2: Due Diligence & KYC"]
+
+    subgraph P2A["Document Request & Collection"]
+        P2_Entry(["FROM Phase 1:<br/>Go decision confirmed"])
+        KYC_OpenCase["KYC Analyst: Open case file<br/>& prepare document request list"]
+        Desk_DeliverRequest["Trading Desk / RM: Deliver<br/>doc request to borrower"]
+        Desk_CollectDocs["Trading Desk / RM: Collect<br/>docs from borrower"]
+        KYC_CheckCompleteness["KYC Analyst: Check<br/>document completeness"]
+        Decision_DocsComplete{"Documents<br/>complete?"}
+        Desk_FollowUp["Trading Desk / RM: Follow up<br/>on outstanding items"]
+    end
+
+    subgraph P2B["Core KYC Analysis"]
+        KYC_UBO["KYC Analyst: Identify & verify<br/>UBOs, screen against<br/>sanctions & PEP lists"]
+        Decision_EDD{"Amber flag<br/>from Phase 1?"}
+        KYC_EDD["KYC + Sr Compliance:<br/>Enhanced Due Diligence<br/>(adverse media, source of funds)"]
+        KYC_RegDeepDive["KYC Analyst: Regulatory &<br/>licensing deep-dive"]
+    end
+
+    subgraph P2C["Parallel: ODD"]
+        ODD_Assessment["ODD Team: Operational &<br/>strategy assessment<br/>(AUM, admin, key person risk)"]
+    end
+
+    subgraph P2D["Parallel: Tax"]
+        Tax_Collect["Tax Ops: Collect & verify<br/>tax documentation<br/>(W-8/W-9, FATCA, CRS)"]
+    end
+
+    subgraph P2E["Package Assembly & Approval"]
+        KYC_Assemble["KYC Analyst: Compile<br/>KYC package per<br/>firm standard template"]
+        KYC_Review["Review Chain: KYC Analyst →<br/>Sr KYC Officer →<br/>Compliance sign-off"]
+        Decision_KYCApproved{"KYC package<br/>approved?"}
+        End_KYC_Rejected(["CLOSED: Material<br/>compliance concern"])
+        KYC_Complete["KYC Package complete<br/>→ feeds Phase 6"]
+    end
+
+end
+
+%% Phase 2 connections
+P2_Entry --> KYC_OpenCase
+KYC_OpenCase --> Desk_DeliverRequest
+Desk_DeliverRequest --> Desk_CollectDocs
+Desk_CollectDocs --> KYC_CheckCompleteness
+KYC_CheckCompleteness --> Decision_DocsComplete
+Decision_DocsComplete -->|"No — gaps remain"| Desk_FollowUp
+Desk_FollowUp --> Desk_CollectDocs
+Decision_DocsComplete -->|"Yes — complete"| KYC_UBO
+Decision_DocsComplete -->|"Yes — complete"| ODD_Assessment
+Decision_DocsComplete -->|"Yes — complete"| Tax_Collect
+KYC_UBO --> Decision_EDD
+Decision_EDD -->|"Yes — Amber"| KYC_EDD
+KYC_EDD --> KYC_RegDeepDive
+Decision_EDD -->|"No — Green"| KYC_RegDeepDive
+KYC_RegDeepDive --> KYC_Assemble
+ODD_Assessment --> KYC_Assemble
+Tax_Collect --> KYC_Assemble
+KYC_Assemble --> KYC_Review
+KYC_Review --> Decision_KYCApproved
+Decision_KYCApproved -->|"Deficiencies"| Desk_FollowUp
+Decision_KYCApproved -->|"Rejected"| End_KYC_Rejected
+Decision_KYCApproved -->|"Approved"| KYC_Complete
+
+%% ============================================================
+%% PHASE 3: Financial & Credit Analysis
+%% ============================================================
+
+subgraph P3["Phase 3: Financial & Credit Analysis"]
+
+    subgraph P3A["Financial Statement Sourcing"]
+        P3_Entry(["FROM Phase 1:<br/>Go decision confirmed"])
+        CA_SourceFinancials["Credit Analyst: Source financials<br/>(borrower-provided +<br/>independent regulatory filings)"]
+        Decision_FundAdmin{"Hedge fund or<br/>unrated entity?"}
+        CA_VerifyFundAdmin["Credit Analyst: Verify financials<br/>via independent fund admin"]
+        CA_SpreadNormalize["Credit Analyst: Spread & normalize<br/>financials into firm template<br/>(3yr min, IFRS/GAAP adjusted)"]
+    end
+
+    subgraph P3B["Financial Analysis & Rating"]
+
+        subgraph P3B1["Track 1: Quantitative Analysis"]
+            CA_QuantAnalysis["Credit Analyst: Core ratio &<br/>metrics analysis per<br/>counterparty classification"]
+            CA_PeerComp["Credit Analyst: Peer group<br/>benchmarking via<br/>vendor databases"]
+        end
+
+        subgraph P3B2["Track 2: External Ratings"]
+            CA_ExtRating["Credit Analyst: Pull external<br/>ratings (Moody's, S&P, Fitch),<br/>review actions & outlook"]
+        end
+
+        Sys_InternalModel["System: Internal credit<br/>rating model — produces<br/>preliminary quantitative rating"]
+        CA_RatingOverride["Credit Analyst: Qualitative<br/>adjustments to model output<br/>(documented rationale required)"]
+    end
+
+    subgraph P3C["Stress & Indemnification Analysis"]
+        MktRisk_Scenarios["Market Risk / Quant Risk:<br/>Provide firm-standard<br/>stress scenarios"]
+        CA_StressAnalysis["Credit Analyst: Apply stress<br/>scenarios to borrower financials"]
+        CA_WWR["Credit Analyst + Mkt Risk:<br/>Indemnification & wrong-way<br/>risk — collateral shortfall<br/>under correlated stress"]
+    end
+
+    subgraph P3D["Review & Decision"]
+        CA_SelfReview["Credit Analyst: Self-review<br/>Financial Analysis Report"]
+        SrCA_Review["Sr Credit Analyst: Review<br/>quality, overrides, stress<br/>assumptions"]
+        HoCR_Signoff["Head of Credit Risk:<br/>Sign-off on internal rating"]
+        Decision_CreditOutcome{"Financial analysis<br/>outcome?"}
+        P3_Acceptable["Acceptable: Report feeds<br/>Phase 5 & Phase 6"]
+        P3_Marginal["Marginal: Proceed with<br/>flagged concerns"]
+        HoCR_CounterOffer["Head of Credit Risk:<br/>Propose restrictive<br/>counter-offer terms"]
+        Desk_AssessTerms["Trading Desk: Assess<br/>commercial viability of<br/>restricted terms"]
+        Decision_CounterViable{"Restricted terms<br/>workable?"}
+        P3_ProceedRestricted["Proceed with restrictions<br/>→ hard constraints in Phase 5"]
+        End_Closed_NoPath(["CLOSED: No viable path"])
+        End_Closed_Commercial_P3(["CLOSED: Restricted terms<br/>not commercially viable"])
+    end
+
+end
+
+%% Phase 3 connections
+P3_Entry --> CA_SourceFinancials
+CA_SourceFinancials --> Decision_FundAdmin
+Decision_FundAdmin -->|"Yes"| CA_VerifyFundAdmin
+CA_VerifyFundAdmin --> CA_SpreadNormalize
+Decision_FundAdmin -->|"No — regulated entity"| CA_SpreadNormalize
+CA_SpreadNormalize --> CA_QuantAnalysis
+CA_SpreadNormalize --> CA_ExtRating
+CA_QuantAnalysis --> CA_PeerComp
+CA_PeerComp --> Sys_InternalModel
+CA_ExtRating --> Sys_InternalModel
+Sys_InternalModel --> CA_RatingOverride
+CA_RatingOverride --> CA_StressAnalysis
+MktRisk_Scenarios --> CA_StressAnalysis
+CA_StressAnalysis --> CA_WWR
+CA_WWR --> CA_SelfReview
+CA_SelfReview --> SrCA_Review
+SrCA_Review --> HoCR_Signoff
+HoCR_Signoff --> Decision_CreditOutcome
+Decision_CreditOutcome -->|"Acceptable"| P3_Acceptable
+Decision_CreditOutcome -->|"Marginal"| P3_Marginal
+Decision_CreditOutcome -->|"Counter-offer possible"| HoCR_CounterOffer
+Decision_CreditOutcome -->|"No viable path"| End_Closed_NoPath
+HoCR_CounterOffer --> Desk_AssessTerms
+Desk_AssessTerms --> Decision_CounterViable
+Decision_CounterViable -->|"Yes — workable"| P3_ProceedRestricted
+Decision_CounterViable -->|"No — not viable"| End_Closed_Commercial_P3
+
+%% ============================================================
+%% PHASE 4: Legal & Documentation Review
+%% ============================================================
+
+subgraph P4["Phase 4: Legal & Documentation Review"]
+
+    subgraph P4A["Agreement Selection & Legal Capacity"]
+        P4_Entry(["FROM Phase 1:<br/>Go decision confirmed"])
+        Legal_SelectAgreement["Legal: Select master agreement<br/>(GMSLA or MSLA) based on<br/>jurisdiction & preference"]
+        Legal_CapacityReview["Legal: Verify borrower's legal<br/>capacity, constitutional authority<br/>& signatory authority"]
+        Decision_Capacity{"Legal capacity<br/>confirmed?"}
+        End_Closed_Capacity(["CLOSED: Lacks legal<br/>capacity — hard stop"])
+    end
+
+    subgraph P4B["Netting Opinion (CRITICAL PATH)"]
+        Legal_NettingOpinion["External Counsel: Assess<br/>close-out netting enforceability<br/>in borrower's jurisdiction"]
+        Decision_NettingRaw{"Netting opinion<br/>status?"}
+        P4_NettingClean["CLEAN: Netting fully<br/>enforceable"]
+        P4_NettingQualified["QUALIFIED: Enforceable<br/>subject to carve-outs"]
+        P4_NettingUnenforceable["UNENFORCEABLE: Netting<br/>not recognized"]
+    end
+
+    subgraph P4C["Regulatory Determination"]
+        Legal_RegDetermination["Head Credit Risk + Head Legal:<br/>Does qualification meet<br/>Basel III / SA-CCR standard?"]
+        Decision_RegStandard{"Meets netting<br/>standard?"}
+        P4_QualifiedAsNet["Treated as NET<br/>for capital purposes"]
+        P4_QualifiedAsGross["Treated as GROSS<br/>for capital purposes"]
+    end
+
+    subgraph P4D["Gross Exposure Escalation"]
+        Legal_GrossEscalation["Auto-escalation: Gross limits<br/>mandatory — economics change"]
+        Desk_GrossViability["Trading Desk: Assess revenue<br/>viability under gross economics"]
+        Decision_GrossViable{"Gross exposure<br/>viable?"}
+        P4_ProceedGross["Proceed with gross limits<br/>→ mandated for Phase 5"]
+        End_Closed_Netting(["CLOSED: Gross economics<br/>not viable"])
+    end
+
+    subgraph P4E["Collateral & Cross-Default"]
+        Legal_CollateralEnforce["Legal: Assess collateral<br/>enforceability (title transfer<br/>vs. pledge structure)"]
+        Legal_CrossDefault["Legal: Cross-default,<br/>cross-product netting &<br/>jurisdictional risk review"]
+    end
+
+    subgraph P4F["Non-Standard Terms Negotiation"]
+        Legal_ReceiveAmendments["Legal: Receive borrower's<br/>requested amendments"]
+        Decision_AmendmentRisk{"Amendments alter<br/>risk profile?"}
+        Legal_ApproveStandard["Legal: Approve amendments<br/>within delegated authority"]
+        Credit_ReviewAmendment["Credit Risk: Assess<br/>risk-altering amendments"]
+        Decision_CreditAccepts{"Credit accepts<br/>amended terms?"}
+        Legal_NegotiateBack["Legal: Negotiate<br/>counter-proposal"]
+        Decision_NegotiationResolved{"Terms agreed?"}
+        Legal_EscalateTerms["Escalation: Head Legal +<br/>Head Sec Lending — final<br/>decision on material terms"]
+        Decision_EscalationOutcome{"Proceed?"}
+        End_Closed_Terms(["CLOSED: Cannot agree<br/>on material terms"])
+    end
+
+    subgraph P4G["Legal Memo Assembly"]
+        Legal_AssembleMemo["Legal: Assemble Legal<br/>Review Memo"]
+        Legal_ReviewChain["Review Chain: Counsel →<br/>Sr Counsel → Head of Legal"]
+        Decision_LegalOutcome{"Legal review<br/>outcome?"}
+        P4_ClearToProceed["Legal Memo complete<br/>→ feeds Phase 5 & 6"]
+        P4_FlaggedRisks["Proceed with flagged<br/>legal risks"]
+        End_Closed_Legal(["CLOSED: Legal<br/>impediment"])
+    end
+
+end
+
+%% Phase 4 connections
+P4_Entry --> Legal_SelectAgreement
+Legal_SelectAgreement --> Legal_CapacityReview
+Legal_CapacityReview --> Decision_Capacity
+Decision_Capacity -->|"No — deficient"| End_Closed_Capacity
+Decision_Capacity -->|"Yes — confirmed"| Legal_NettingOpinion
+Legal_NettingOpinion --> Decision_NettingRaw
+Decision_NettingRaw -->|"Clean"| P4_NettingClean
+Decision_NettingRaw -->|"Qualified"| P4_NettingQualified
+Decision_NettingRaw -->|"Unenforceable"| P4_NettingUnenforceable
+P4_NettingClean --> Legal_CollateralEnforce
+P4_NettingQualified --> Legal_RegDetermination
+Legal_RegDetermination --> Decision_RegStandard
+Decision_RegStandard -->|"Yes — meets standard"| P4_QualifiedAsNet
+Decision_RegStandard -->|"No — fails standard"| P4_QualifiedAsGross
+P4_QualifiedAsNet --> Legal_CollateralEnforce
+P4_QualifiedAsGross --> Legal_GrossEscalation
+P4_NettingUnenforceable --> Legal_GrossEscalation
+Legal_GrossEscalation --> Desk_GrossViability
+Desk_GrossViability --> Decision_GrossViable
+Decision_GrossViable -->|"Yes — viable"| P4_ProceedGross
+Decision_GrossViable -->|"No — not viable"| End_Closed_Netting
+P4_ProceedGross --> Legal_CollateralEnforce
+Legal_CollateralEnforce --> Legal_CrossDefault
+Legal_CrossDefault --> Legal_ReceiveAmendments
+Legal_ReceiveAmendments --> Decision_AmendmentRisk
+Decision_AmendmentRisk -->|"No — admin only"| Legal_ApproveStandard
+Decision_AmendmentRisk -->|"Yes — risk-altering"| Credit_ReviewAmendment
+Credit_ReviewAmendment --> Decision_CreditAccepts
+Decision_CreditAccepts -->|"Yes — acceptable"| Legal_ApproveStandard
+Decision_CreditAccepts -->|"No — unacceptable"| Legal_NegotiateBack
+Legal_NegotiateBack --> Decision_NegotiationResolved
+Decision_NegotiationResolved -->|"Yes — agreed"| Legal_ApproveStandard
+Decision_NegotiationResolved -->|"No — impasse"| Legal_EscalateTerms
+Legal_EscalateTerms --> Decision_EscalationOutcome
+Decision_EscalationOutcome -->|"Yes — proceed"| Legal_ApproveStandard
+Decision_EscalationOutcome -->|"No — cannot agree"| End_Closed_Terms
+Legal_ApproveStandard --> Legal_AssembleMemo
+Legal_AssembleMemo --> Legal_ReviewChain
+Legal_ReviewChain --> Decision_LegalOutcome
+Decision_LegalOutcome -->|"Clear to proceed"| P4_ClearToProceed
+Decision_LegalOutcome -->|"Flagged risks"| P4_FlaggedRisks
+Decision_LegalOutcome -->|"Legal impediment"| End_Closed_Legal
+
+%% ============================================================
+%% PHASE 5: Collateral, Exposure, Negotiation & Ops Assessment
+%% ============================================================
+
+subgraph P5["Phase 5: Collateral, Exposure & Negotiation"]
+
+    subgraph P5A["Upstream Ingestion"]
+        P5_Entry(["FROM Phases 3 & 4:<br/>Rating, netting & legal<br/>analysis complete"])
+        Credit_IngestInputs["Credit Risk: Log upstream<br/>dependencies (rating, netting<br/>status, enforceability,<br/>Phase 3 restrictions)"]
+    end
+
+    subgraph P5B["Collateral & Exposure Limits"]
+        Credit_BaseMatrix["Credit Risk: Apply firm's<br/>standard Collateral Policy<br/>Matrix (base haircuts)"]
+        Credit_AddOns["Credit Risk: Borrower-specific<br/>add-ons (rating, WWR,<br/>liquidity, concentrations)"]
+        Credit_LimitSizing["Credit Risk: Size exposure<br/>limit (net vs. gross<br/>per netting status)"]
+    end
+
+    subgraph P5C["Capital Impact"]
+        CapMgmt_DefinitiveRWA["Capital Mgmt: Definitive<br/>SA-CCR / RWA calculation<br/>(replaces Phase 1 estimate)"]
+    end
+
+    subgraph P5D["Margin Framework"]
+        Credit_MarginFramework["Credit Risk: Define margin<br/>call parameters (frequency,<br/>settlement, MTA, substitution)"]
+    end
+
+    subgraph P5E["Parallel: Ops Assessment"]
+        Ops_Assessment["Operations: Assess borrower<br/>settlement infrastructure<br/>(connectivity, STP, capacity)"]
+        Decision_OpsRisk{"Material<br/>settlement risk?"}
+        Ops_Clear["Ops: No material concerns"]
+        Ops_Flag["Ops: Material risk flagged"]
+        Credit_OpsCompensation["Credit Risk: Mandate<br/>compensating controls<br/>for Ops findings"]
+    end
+
+    subgraph P5F["Haircut Negotiation"]
+        Desk_PresentTerms["Trading Desk: Present<br/>haircut schedule to borrower"]
+        Decision_BorrowerAccepts{"Borrower<br/>accepts?"}
+        P5_HaircutsAgreed["Haircut schedule locked"]
+        Desk_CounterProposal["Trading Desk: Receive<br/>borrower counter-proposal"]
+        Decision_PolicyFloor{"Below Policy<br/>Floor?"}
+        Credit_AssessAboveFloor["Credit Risk: Assess<br/>counter-proposal<br/>(above floor)"]
+        Decision_CreditAcceptsHaircut{"Revised haircuts<br/>acceptable?"}
+        P5_RevisedAgreed["Revised schedule agreed<br/>(concession documented)"]
+        SCO_Exception["SCO: Formal exception for<br/>below-floor haircuts<br/>(disclosed in memo)"]
+        Decision_ExceptionGranted{"Exception<br/>approved?"}
+        P5_ExceptionAgreed["Exception approved<br/>(documented for committee)"]
+        Desk_FinalAttempt["Desk + Credit: Joint<br/>assessment — any viable<br/>compromise remaining?"]
+        Decision_CompromiseExists{"Viable<br/>compromise?"}
+        End_Closed_Haircut(["CLOSED: No viable<br/>haircut compromise"])
+    end
+
+    subgraph P5G["Phase 5 Package"]
+        Credit_AssembleP5["Credit Risk: Assemble<br/>Phase 5 output package<br/>→ feeds Phase 6"]
+    end
+
+end
+
+%% Phase 5 connections
+P5_Entry --> Credit_IngestInputs
+Credit_IngestInputs --> Credit_BaseMatrix
+Credit_BaseMatrix --> Credit_AddOns
+Credit_AddOns --> Credit_LimitSizing
+Credit_LimitSizing --> CapMgmt_DefinitiveRWA
+CapMgmt_DefinitiveRWA --> Credit_MarginFramework
+Credit_IngestInputs --> Ops_Assessment
+Ops_Assessment --> Decision_OpsRisk
+Decision_OpsRisk -->|"No"| Ops_Clear
+Decision_OpsRisk -->|"Yes"| Ops_Flag
+Ops_Flag --> Credit_OpsCompensation
+Credit_MarginFramework --> Desk_PresentTerms
+Ops_Clear --> Desk_PresentTerms
+Credit_OpsCompensation --> Desk_PresentTerms
+Desk_PresentTerms --> Decision_BorrowerAccepts
+Decision_BorrowerAccepts -->|"Yes"| P5_HaircutsAgreed
+Decision_BorrowerAccepts -->|"No — counter-proposes"| Desk_CounterProposal
+Desk_CounterProposal --> Decision_PolicyFloor
+Decision_PolicyFloor -->|"No — above floor"| Credit_AssessAboveFloor
+Decision_PolicyFloor -->|"Yes — below floor"| SCO_Exception
+Credit_AssessAboveFloor --> Decision_CreditAcceptsHaircut
+Decision_CreditAcceptsHaircut -->|"Yes"| P5_RevisedAgreed
+Decision_CreditAcceptsHaircut -->|"No — inadequate"| Desk_FinalAttempt
+SCO_Exception --> Decision_ExceptionGranted
+Decision_ExceptionGranted -->|"Yes"| P5_ExceptionAgreed
+Decision_ExceptionGranted -->|"No — denied"| Desk_FinalAttempt
+Desk_FinalAttempt --> Decision_CompromiseExists
+Decision_CompromiseExists -->|"Yes — revised terms"| Desk_CounterProposal
+Decision_CompromiseExists -->|"No — no compromise"| End_Closed_Haircut
+P5_HaircutsAgreed --> Credit_AssembleP5
+P5_RevisedAgreed --> Credit_AssembleP5
+P5_ExceptionAgreed --> Credit_AssembleP5
+
+%% ============================================================
+%% PHASE 6: Credit Memorandum Drafting
+%% ============================================================
+
+subgraph P6["Phase 6: Credit Memorandum Drafting"]
+
+    subgraph P6A["Upstream Confirmation"]
+        P6_Entry(["FROM Phases 2–5:<br/>All upstream deliverables<br/>complete"])
+        CA_ConfirmInputs["Credit Analyst: Confirm<br/>receipt & completeness of<br/>all upstream deliverables"]
+    end
+
+    subgraph P6B["Memo Drafting"]
+        CA_PopulateTemplate["Credit Analyst: Populate<br/>firm's standardized Credit<br/>Approval Memo template<br/>(S1–S8 mandatory sections)"]
+        CA_Exceptions["Credit Analyst: Compile<br/>Exceptions & Key Risks<br/>section (front of memo)"]
+    end
+
+    subgraph P6C["Business Case Refresh"]
+        Desk_RefreshCase["Trading Desk: Provide updated<br/>commercial case (actual terms,<br/>definitive RWA, hurdle rate)"]
+    end
+
+    subgraph P6D["SME Sign-Off (Parallel)"]
+
+        subgraph P6D1["Legal Sign-Off"]
+            Legal_Signoff["Legal: Review & sign-off<br/>Section 6 + relevant<br/>Exceptions entries"]
+        end
+
+        subgraph P6D2["Compliance Sign-Off"]
+            Comp_Signoff["Compliance: Review & sign-off<br/>Section 3 + relevant<br/>Exceptions entries"]
+        end
+
+    end
+
+    subgraph P6E["Final Review"]
+        SCO_FinalReview["SCO: Final substantive<br/>review of complete memo"]
+        Decision_MemoReady{"Memo ready for<br/>Committee?"}
+        P6_SubmitToCommittee["Memo submitted to<br/>Credit Committee<br/>→ Phase 7"]
+        P6_RevisionsRequired["Revisions required —<br/>loop back to relevant section"]
+        End_Closed_Decline(["RECOMMENDATION<br/>CHANGED TO DECLINE"])
+    end
+
+end
+
+%% Phase 6 connections
+P6_Entry --> CA_ConfirmInputs
+CA_ConfirmInputs --> CA_PopulateTemplate
+CA_PopulateTemplate --> CA_Exceptions
+CA_ConfirmInputs --> Desk_RefreshCase
+CA_Exceptions --> Legal_Signoff
+CA_Exceptions --> Comp_Signoff
+Desk_RefreshCase --> CA_PopulateTemplate
+Legal_Signoff --> SCO_FinalReview
+Comp_Signoff --> SCO_FinalReview
+SCO_FinalReview --> Decision_MemoReady
+Decision_MemoReady -->|"Approved"| P6_SubmitToCommittee
+Decision_MemoReady -->|"Revisions required"| P6_RevisionsRequired
+Decision_MemoReady -->|"Changed to Decline"| End_Closed_Decline
+P6_RevisionsRequired --> CA_PopulateTemplate
+
+%% ============================================================
+%% PHASE 7: Committee Review & Approval
+%% ============================================================
+
+subgraph P7["Phase 7: Committee Review & Approval"]
+
+    subgraph P7A["Pre-Meeting Distribution"]
+        P7_Entry(["FROM Phase 6:<br/>Memo approved for submission"])
+        CreditAdmin_Distribute["Committee Secretary:<br/>Distribute memo to all<br/>Committee members"]
+    end
+
+    subgraph P7B["Dual Presentation"]
+        Desk_CommercialPresentation["Trading Desk: Present<br/>commercial rationale &<br/>revenue projections"]
+        CA_RiskPresentation["Credit Analyst: Present risk<br/>profile, exceptions & key<br/>risks, indemnification impact"]
+    end
+
+    subgraph P7C["Committee Challenge"]
+        Committee_Challenge["Credit Committee:<br/>Substantive risk debate<br/>(WWR, netting, haircuts,<br/>indemnification, exceptions)"]
+    end
+
+    subgraph P7D["Committee Decision"]
+        Decision_CommitteeOutcome{"Committee<br/>decision?"}
+        P7_CleanApproval["CLEAN APPROVAL:<br/>As presented"]
+        P7_Reject["REJECT: Risk/return<br/>not justified"]
+        P7_Defer["DEFER: Information<br/>gaps — route back"]
+        P7_ApproveConditions["APPROVE WITH<br/>CONDITIONS"]
+    end
+
+    subgraph P7E["Decision Record"]
+        CreditAdmin_DecisionRecord["Committee Secretary:<br/>Document decision in<br/>formal Decision Record"]
+    end
+
+    subgraph P7F["Rework Routing"]
+        CA_NotifyRework["Credit Analyst: Notify<br/>upstream teams with<br/>conditions & deadlines"]
+        Decision_ReworkType{"Rework type?"}
+        P7_RouteToLegal["Route to Phase 4:<br/>Documentation terms"]
+        P7_RouteToCollateral["Route to Phase 5:<br/>Limits / collateral"]
+        P7_RouteToCredit["Route to Phase 3:<br/>Additional analysis"]
+        CA_PrepareAddendum["Credit Analyst: Prepare<br/>addendum / amended section"]
+        Decision_AddendumAuthority{"Within SCO<br/>authority?"}
+        SCO_SignoffAddendum["SCO: Sign-off addendum"]
+        Committee_RePresentation["Re-presentation to<br/>Committee required"]
+        P7_ReworkComplete["Rework complete<br/>→ Phase 8"]
+    end
+
+    Decision_HasRework{"Rework<br/>conditions?"}
+    P7_ProceedToPhase8["Decision Record complete<br/>→ Phase 8"]
+
+end
+
+%% Phase 7 connections
+P7_Entry --> CreditAdmin_Distribute
+CreditAdmin_Distribute --> Desk_CommercialPresentation
+Desk_CommercialPresentation --> CA_RiskPresentation
+CA_RiskPresentation --> Committee_Challenge
+Committee_Challenge --> Decision_CommitteeOutcome
+Decision_CommitteeOutcome -->|"Clean Approval"| P7_CleanApproval
+Decision_CommitteeOutcome -->|"Reject"| P7_Reject
+Decision_CommitteeOutcome -->|"Defer"| P7_Defer
+Decision_CommitteeOutcome -->|"Approve with Conditions"| P7_ApproveConditions
+P7_CleanApproval --> CreditAdmin_DecisionRecord
+P7_ApproveConditions --> CreditAdmin_DecisionRecord
+CreditAdmin_DecisionRecord --> Decision_HasRework
+Decision_HasRework -->|"No — clean / CPs only"| P7_ProceedToPhase8
+Decision_HasRework -->|"Yes — rework required"| CA_NotifyRework
+CA_NotifyRework --> Decision_ReworkType
+Decision_ReworkType -->|"Documentation"| P7_RouteToLegal
+Decision_ReworkType -->|"Collateral / limits"| P7_RouteToCollateral
+Decision_ReworkType -->|"Analysis"| P7_RouteToCredit
+P7_RouteToLegal --> CA_PrepareAddendum
+P7_RouteToCollateral --> CA_PrepareAddendum
+P7_RouteToCredit --> CA_PrepareAddendum
+CA_PrepareAddendum --> Decision_AddendumAuthority
+Decision_AddendumAuthority -->|"Yes — delegated"| SCO_SignoffAddendum
+Decision_AddendumAuthority -->|"No — material change"| Committee_RePresentation
+SCO_SignoffAddendum --> P7_ReworkComplete
+Committee_RePresentation --> P7_ReworkComplete
+P7_Defer --> CA_NotifyRework
+
+End_Rejected(["CLOSED: Committee<br/>rejection"])
+P7_Reject --> End_Rejected
+
+%% ============================================================
+%% PHASE 8: Post-Approval Activation
+%% ============================================================
+
+subgraph P8["Phase 8: Post-Approval Activation"]
+
+    subgraph P8A["Rework Verification"]
+        P8_Entry(["FROM Phase 7:<br/>Committee approval received"])
+        Credit_VerifyRework["Credit Risk: Verify all<br/>rework conditions satisfied<br/>before activation proceeds"]
+    end
+
+    subgraph P8B["Agreement Execution"]
+        Legal_ExecuteAgreement["Legal: Execute master<br/>agreement (GMSLA/MSLA)<br/>— both parties sign"]
+    end
+
+    subgraph P8C["System Configuration"]
+        Credit_LoadLimits["Credit Risk: Load limits<br/>(net/gross), rating &<br/>SA-CCR parameters"]
+        Ops_SystemSetup["Operations: Set up SSIs,<br/>settlement connectivity<br/>& margin call processing"]
+        CollMgmt_LoadSchedule["Collateral Mgmt: Load<br/>eligibility schedule,<br/>haircuts & concentration limits"]
+        Credit_PostSetupVerify["Credit Risk: Post-setup<br/>verification — all systems<br/>match Decision Record"]
+    end
+
+    subgraph P8D["Condition Precedent Tracker"]
+        Credit_ReviewCPs["Credit Risk: Log CPs into<br/>formal tracking register"]
+        Decision_CPsExist{"Forward-looking<br/>CPs attached?"}
+        P8_NoCPs["No CPs → full activation"]
+        Decision_CPType{"CP type?"}
+        P8_PreTradeCPs["PRE-TRADE CPs:<br/>Must satisfy before<br/>first trade (blocking)"]
+        P8_TimeBoundCPs["TIME-BOUND CPs:<br/>Deadlines & escalation<br/>triggers (non-blocking)"]
+    end
+
+    subgraph P8E["Activation Decision"]
+        Decision_ActivationStatus{"Activation<br/>status?"}
+        P8_FullActivation["FULL ACTIVATION:<br/>Live at approved limits"]
+        P8_ProvisionalActivation["PROVISIONAL:<br/>Live at capped limits<br/>with active CP tracker"]
+        P8_ActivationBlocked["BLOCKED: Awaiting<br/>pre-trade CP evidence"]
+    end
+
+    subgraph P8F["Monitoring Handoff"]
+        Credit_MonitoringHandoff["Credit Risk: Establish<br/>monitoring triggers<br/>(annual review, alerts,<br/>covenants, KYC refresh)"]
+        Credit_ActivationConfirmation["Credit Risk: Issue formal<br/>Activation Confirmation<br/>(distributed to all teams)"]
+        End_FullyLive(["COUNTERPARTY LIVE"])
+        End_ProvisionalLive(["COUNTERPARTY LIVE<br/>(PROVISIONAL)"])
+        End_PendingCPs(["COUNTERPARTY<br/>PENDING"])
+    end
+
+end
+
+%% Phase 8 connections
+P8_Entry --> Credit_VerifyRework
+Credit_VerifyRework --> Legal_ExecuteAgreement
+Legal_ExecuteAgreement --> Credit_LoadLimits
+Legal_ExecuteAgreement --> Ops_SystemSetup
+Legal_ExecuteAgreement --> CollMgmt_LoadSchedule
+Credit_LoadLimits --> Credit_PostSetupVerify
+Ops_SystemSetup --> Credit_PostSetupVerify
+CollMgmt_LoadSchedule --> Credit_PostSetupVerify
+Credit_PostSetupVerify --> Credit_ReviewCPs
+Credit_ReviewCPs --> Decision_CPsExist
+Decision_CPsExist -->|"No CPs"| P8_NoCPs
+Decision_CPsExist -->|"Yes — CPs attached"| Decision_CPType
+Decision_CPType -->|"Pre-trade (blocking)"| P8_PreTradeCPs
+Decision_CPType -->|"Time-bound (non-blocking)"| P8_TimeBoundCPs
+P8_NoCPs --> Decision_ActivationStatus
+P8_PreTradeCPs --> Decision_ActivationStatus
+P8_TimeBoundCPs --> Decision_ActivationStatus
+Decision_ActivationStatus -->|"Full activation"| P8_FullActivation
+Decision_ActivationStatus -->|"Provisional"| P8_ProvisionalActivation
+Decision_ActivationStatus -->|"Blocked"| P8_ActivationBlocked
+P8_FullActivation --> Credit_MonitoringHandoff
+P8_ProvisionalActivation --> Credit_MonitoringHandoff
+P8_ActivationBlocked --> Credit_MonitoringHandoff
+Credit_MonitoringHandoff --> Credit_ActivationConfirmation
+Credit_ActivationConfirmation --> End_FullyLive
+Credit_ActivationConfirmation --> End_ProvisionalLive
+Credit_ActivationConfirmation --> End_PendingCPs
+
+%% ============================================================
+%% INTER-PHASE CONNECTIONS
+%% ============================================================
+
+%% Phase 1 → Phases 2, 3, 4 (parallel launch)
+Launch_Parallel --> P2_Entry
+Launch_Parallel --> P3_Entry
+Launch_Parallel --> P4_Entry
+
+%% Phases 3 & 4 → Phase 5
+P3_Acceptable --> P5_Entry
+P3_Marginal --> P5_Entry
+P3_ProceedRestricted --> P5_Entry
+P4_ClearToProceed --> P5_Entry
+P4_FlaggedRisks --> P5_Entry
+
+%% Phases 2, 3, 4, 5 → Phase 6
+KYC_Complete --> P6_Entry
+Credit_AssembleP5 --> P6_Entry
+
+%% Phase 6 → Phase 7
+P6_SubmitToCommittee --> P7_Entry
+
+%% Phase 7 → Phase 8
+P7_ProceedToPhase8 --> P8_Entry
+P7_ReworkComplete --> P8_Entry
+
+%% ============================================================
+%% STYLE DEFINITIONS — Dual-Coded: Role (Fill) + LLM Capability (Stroke)
+%% ============================================================
+%%
+%% DIMENSION 1 — Fill Color = Role / Team Ownership:
+%%   Trading Desk / Business          = Orange         #E69F00
+%%   Compliance / KYC / AML           = Reddish Purple #CC79A7
+%%   Credit Risk / ODD / SCO          = Blue           #0072B2
+%%   Capital Management               = Bluish Green   #009E73
+%%   System / Automated               = Yellow         #F0E442
+%%   Legal (Securities Lending)       = Vermillion     #D55E00
+%%   Market Risk / Quant Risk         = Sky Blue       #56B4E9
+%%   Operations / Settlement          = Grey           #999999
+%%   Credit Committee / Secretary     = Dark Grey      #666666
+%%
+%% DIMENSION 2 — Stroke Color (4px) = LLM Capability:
+%%   GREEN  #2ECC40 = Fully LLM-Capable
+%%   YELLOW #FFBF00 = Hybrid (LLM + Human)
+%%   RED    #CC0000 = Human Only
+%%   GRAY   #888888 = External Dependency
+%%
+
+%% === PHASE 1 STYLES ===
+style Desk_SubmitRequest stroke:#FFBF00,stroke-width:4px,fill:#E69F00,color:#000
+style Desk_CommercialCase stroke:#FFBF00,stroke-width:4px,fill:#E69F00,color:#000
+style Comp_AutoScreen stroke:#2ECC40,stroke-width:4px,fill:#CC79A7,color:#000
+style Comp_Escalation stroke:#CC0000,stroke-width:4px,fill:#CC79A7,color:#000
+style Comp_FlagEDD stroke:#2ECC40,stroke-width:4px,fill:#CC79A7,color:#000
+style Credit_Classify stroke:#FFBF00,stroke-width:4px,fill:#0072B2,color:#FFF
+style Credit_AppetiteCheck stroke:#FFBF00,stroke-width:4px,fill:#0072B2,color:#FFF
+style CapMgmt_CalcRWA stroke:#2ECC40,stroke-width:4px,fill:#009E73,color:#FFF
+style Desk_SystemValidation stroke:#2ECC40,stroke-width:4px,fill:#F0E442,color:#000
+
+%% === PHASE 2 STYLES ===
+style Desk_DeliverRequest stroke:#CC0000,stroke-width:4px,fill:#E69F00,color:#000
+style Desk_CollectDocs stroke:#CC0000,stroke-width:4px,fill:#E69F00,color:#000
+style Desk_FollowUp stroke:#CC0000,stroke-width:4px,fill:#E69F00,color:#000
+style KYC_OpenCase stroke:#FFBF00,stroke-width:4px,fill:#CC79A7,color:#000
+style KYC_CheckCompleteness stroke:#2ECC40,stroke-width:4px,fill:#CC79A7,color:#000
+style KYC_UBO stroke:#FFBF00,stroke-width:4px,fill:#CC79A7,color:#000
+style KYC_EDD stroke:#FFBF00,stroke-width:4px,fill:#CC79A7,color:#000
+style KYC_RegDeepDive stroke:#FFBF00,stroke-width:4px,fill:#CC79A7,color:#000
+style KYC_Assemble stroke:#2ECC40,stroke-width:4px,fill:#CC79A7,color:#000
+style KYC_Review stroke:#CC0000,stroke-width:4px,fill:#CC79A7,color:#000
+style ODD_Assessment stroke:#FFBF00,stroke-width:4px,fill:#0072B2,color:#FFF
+style Tax_Collect stroke:#FFBF00,stroke-width:4px,fill:#009E73,color:#FFF
+
+%% === PHASE 3 STYLES ===
+style CA_SourceFinancials stroke:#FFBF00,stroke-width:4px,fill:#0072B2,color:#FFF
+style CA_VerifyFundAdmin stroke:#888888,stroke-width:4px,fill:#0072B2,color:#FFF
+style CA_SpreadNormalize stroke:#FFBF00,stroke-width:4px,fill:#0072B2,color:#FFF
+style CA_QuantAnalysis stroke:#2ECC40,stroke-width:4px,fill:#0072B2,color:#FFF
+style CA_PeerComp stroke:#FFBF00,stroke-width:4px,fill:#0072B2,color:#FFF
+style CA_ExtRating stroke:#2ECC40,stroke-width:4px,fill:#0072B2,color:#FFF
+style CA_RatingOverride stroke:#CC0000,stroke-width:4px,fill:#0072B2,color:#FFF
+style CA_StressAnalysis stroke:#2ECC40,stroke-width:4px,fill:#0072B2,color:#FFF
+style CA_WWR stroke:#FFBF00,stroke-width:4px,fill:#0072B2,color:#FFF
+style CA_SelfReview stroke:#FFBF00,stroke-width:4px,fill:#0072B2,color:#FFF
+style SrCA_Review stroke:#CC0000,stroke-width:4px,fill:#0072B2,color:#FFF
+style HoCR_Signoff stroke:#CC0000,stroke-width:4px,fill:#0072B2,color:#FFF
+style HoCR_CounterOffer stroke:#CC0000,stroke-width:4px,fill:#0072B2,color:#FFF
+style Sys_InternalModel stroke:#2ECC40,stroke-width:4px,fill:#F0E442,color:#000
+style MktRisk_Scenarios stroke:#2ECC40,stroke-width:4px,fill:#56B4E9,color:#000
+style Desk_AssessTerms stroke:#CC0000,stroke-width:4px,fill:#E69F00,color:#000
+
+%% === PHASE 4 STYLES ===
+style Legal_SelectAgreement stroke:#FFBF00,stroke-width:4px,fill:#D55E00,color:#FFF
+style Legal_CapacityReview stroke:#FFBF00,stroke-width:4px,fill:#D55E00,color:#FFF
+style Legal_NettingOpinion stroke:#888888,stroke-width:4px,fill:#D55E00,color:#FFF
+style Legal_RegDetermination stroke:#CC0000,stroke-width:4px,fill:#D55E00,color:#FFF
+style Legal_CollateralEnforce stroke:#FFBF00,stroke-width:4px,fill:#D55E00,color:#FFF
+style Legal_CrossDefault stroke:#FFBF00,stroke-width:4px,fill:#D55E00,color:#FFF
+style Legal_ReceiveAmendments stroke:#CC0000,stroke-width:4px,fill:#D55E00,color:#FFF
+style Legal_ApproveStandard stroke:#CC0000,stroke-width:4px,fill:#D55E00,color:#FFF
+style Legal_NegotiateBack stroke:#CC0000,stroke-width:4px,fill:#D55E00,color:#FFF
+style Legal_EscalateTerms stroke:#CC0000,stroke-width:4px,fill:#D55E00,color:#FFF
+style Legal_AssembleMemo stroke:#2ECC40,stroke-width:4px,fill:#D55E00,color:#FFF
+style Legal_ReviewChain stroke:#CC0000,stroke-width:4px,fill:#D55E00,color:#FFF
+style Legal_GrossEscalation stroke:#2ECC40,stroke-width:4px,fill:#D55E00,color:#FFF
+style Credit_ReviewAmendment stroke:#CC0000,stroke-width:4px,fill:#0072B2,color:#FFF
+style Desk_GrossViability stroke:#CC0000,stroke-width:4px,fill:#E69F00,color:#000
+
+%% === PHASE 5 STYLES ===
+style Credit_IngestInputs stroke:#2ECC40,stroke-width:4px,fill:#0072B2,color:#FFF
+style Credit_BaseMatrix stroke:#2ECC40,stroke-width:4px,fill:#0072B2,color:#FFF
+style Credit_AddOns stroke:#FFBF00,stroke-width:4px,fill:#0072B2,color:#FFF
+style Credit_LimitSizing stroke:#FFBF00,stroke-width:4px,fill:#0072B2,color:#FFF
+style Credit_MarginFramework stroke:#FFBF00,stroke-width:4px,fill:#0072B2,color:#FFF
+style Credit_OpsCompensation stroke:#CC0000,stroke-width:4px,fill:#0072B2,color:#FFF
+style Credit_AssessAboveFloor stroke:#FFBF00,stroke-width:4px,fill:#0072B2,color:#FFF
+style SCO_Exception stroke:#CC0000,stroke-width:4px,fill:#0072B2,color:#FFF
+style Credit_AssembleP5 stroke:#2ECC40,stroke-width:4px,fill:#0072B2,color:#FFF
+style CapMgmt_DefinitiveRWA stroke:#2ECC40,stroke-width:4px,fill:#009E73,color:#FFF
+style Ops_Assessment stroke:#FFBF00,stroke-width:4px,fill:#999999,color:#FFF
+style Ops_Clear stroke:#2ECC40,stroke-width:4px,fill:#999999,color:#FFF
+style Ops_Flag stroke:#2ECC40,stroke-width:4px,fill:#999999,color:#FFF
+style Desk_PresentTerms stroke:#CC0000,stroke-width:4px,fill:#E69F00,color:#000
+style Desk_CounterProposal stroke:#CC0000,stroke-width:4px,fill:#E69F00,color:#000
+style Desk_FinalAttempt stroke:#CC0000,stroke-width:4px,fill:#E69F00,color:#000
+
+%% === PHASE 6 STYLES ===
+style CA_ConfirmInputs stroke:#2ECC40,stroke-width:4px,fill:#0072B2,color:#FFF
+style CA_PopulateTemplate stroke:#2ECC40,stroke-width:4px,fill:#0072B2,color:#FFF
+style CA_Exceptions stroke:#FFBF00,stroke-width:4px,fill:#0072B2,color:#FFF
+style SCO_FinalReview stroke:#CC0000,stroke-width:4px,fill:#0072B2,color:#FFF
+style Desk_RefreshCase stroke:#FFBF00,stroke-width:4px,fill:#E69F00,color:#000
+style Legal_Signoff stroke:#CC0000,stroke-width:4px,fill:#D55E00,color:#FFF
+style Comp_Signoff stroke:#CC0000,stroke-width:4px,fill:#CC79A7,color:#000
+
+%% === PHASE 7 STYLES ===
+style CreditAdmin_Distribute stroke:#2ECC40,stroke-width:4px,fill:#666666,color:#FFF
+style Committee_Challenge stroke:#CC0000,stroke-width:4px,fill:#666666,color:#FFF
+style CreditAdmin_DecisionRecord stroke:#FFBF00,stroke-width:4px,fill:#666666,color:#FFF
+style Committee_RePresentation stroke:#CC0000,stroke-width:4px,fill:#666666,color:#FFF
+style CA_RiskPresentation stroke:#CC0000,stroke-width:4px,fill:#0072B2,color:#FFF
+style CA_NotifyRework stroke:#2ECC40,stroke-width:4px,fill:#0072B2,color:#FFF
+style CA_PrepareAddendum stroke:#FFBF00,stroke-width:4px,fill:#0072B2,color:#FFF
+style SCO_SignoffAddendum stroke:#CC0000,stroke-width:4px,fill:#0072B2,color:#FFF
+style Desk_CommercialPresentation stroke:#CC0000,stroke-width:4px,fill:#E69F00,color:#000
+
+%% === PHASE 8 STYLES ===
+style Credit_VerifyRework stroke:#FFBF00,stroke-width:4px,fill:#0072B2,color:#FFF
+style Credit_LoadLimits stroke:#2ECC40,stroke-width:4px,fill:#0072B2,color:#FFF
+style Credit_PostSetupVerify stroke:#FFBF00,stroke-width:4px,fill:#0072B2,color:#FFF
+style Credit_ReviewCPs stroke:#2ECC40,stroke-width:4px,fill:#0072B2,color:#FFF
+style Credit_MonitoringHandoff stroke:#FFBF00,stroke-width:4px,fill:#0072B2,color:#FFF
+style Credit_ActivationConfirmation stroke:#2ECC40,stroke-width:4px,fill:#0072B2,color:#FFF
+style Legal_ExecuteAgreement stroke:#CC0000,stroke-width:4px,fill:#D55E00,color:#FFF
+style Ops_SystemSetup stroke:#FFBF00,stroke-width:4px,fill:#999999,color:#FFF
+style CollMgmt_LoadSchedule stroke:#2ECC40,stroke-width:4px,fill:#999999,color:#FFF
+
+
+
+      </div>
+    </div>
+  </div>
+
+  <div class="fs-indicator">Press <kbd>Esc</kbd> to exit fullscreen</div>
+</div>
+
+<!-- ═══════════ MERMAID.JS ═══════════ -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  // Init mermaid
+  mermaid.initialize({
+    startOnLoad: true,
+    maxTextSize: 500000,
+    theme: 'dark',
+    flowchart: {
+      useMaxWidth: false,
+      htmlLabels: true,
+      curve: 'basis',
+      rankSpacing: 60,
+      nodeSpacing: 30,
+      padding: 20
+    },
+    themeVariables: {
+      darkMode: true,
+      background: '#151920',
+      primaryColor: '#1c2940',
+      primaryTextColor: '#e2e6ed',
+      primaryBorderColor: '#2a3040',
+      lineColor: '#4a9eff',
+      secondaryColor: '#1c2129',
+      tertiaryColor: '#1c2129',
+      fontSize: '13px'
+    },
+    securityLevel: 'loose'
+  });
+
+  // Store mermaid source
+  let mermaidSource = '';
+  document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('mainChart');
+    mermaidSource = el.textContent.trim();
+  });
+
+  // Zoom state
+  let currentZoom = 100;
+  const MIN_ZOOM = 25;
+  const MAX_ZOOM = 300;
+  const ZOOM_STEP = 10;
+
+  function updateZoom() {
+    const inner = document.getElementById('chartInner');
+    const scale = currentZoom / 100;
+    inner.style.transform = `scale(${scale})`;
+    document.getElementById('zoomDisplay').textContent = currentZoom + '%';
+
+    // Update preset buttons
+    document.querySelectorAll('.zoom-preset').forEach(btn => {
+      btn.classList.toggle('active', parseInt(btn.textContent) === currentZoom);
+    });
+  }
+
+  function zoomIn() {
+    currentZoom = Math.min(MAX_ZOOM, currentZoom + ZOOM_STEP);
+    updateZoom();
+  }
+
+  function zoomOut() {
+    currentZoom = Math.max(MIN_ZOOM, currentZoom - ZOOM_STEP);
+    updateZoom();
+  }
+
+  function setZoom(level) {
+    currentZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, level));
+    updateZoom();
+  }
+
+  function resetView() {
+    currentZoom = 100;
+    updateZoom();
+    const vp = document.getElementById('chartViewport');
+    vp.scrollTo(0, 0);
+  }
+
+  // Mouse wheel zoom (Ctrl + scroll)
+  document.getElementById('chartViewport').addEventListener('wheel', (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      if (e.deltaY < 0) zoomIn();
+      else zoomOut();
+    }
+  }, { passive: false });
+
+  // Copy mermaid source
+  function copyMermaid() {
+    const btn = document.getElementById('copyBtn');
+    navigator.clipboard.writeText(mermaidSource).then(() => {
+      btn.classList.add('copied');
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Copied!`;
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy`;
+      }, 2000);
+    });
+  }
+
+  // Fullscreen toggle
+  let isFullscreen = false;
+  function toggleFullscreen() {
+    const vp = document.getElementById('chartViewport');
+    isFullscreen = !isFullscreen;
+    vp.classList.toggle('fullscreen', isFullscreen);
+  }
+
+  // Escape key exits fullscreen
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isFullscreen) {
+      toggleFullscreen();
+    }
+    // Keyboard zoom shortcuts
+    if ((e.ctrlKey || e.metaKey) && e.key === '=') { e.preventDefault(); zoomIn(); }
+    if ((e.ctrlKey || e.metaKey) && e.key === '-') { e.preventDefault(); zoomOut(); }
+    if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); resetView(); }
+  });
+</script>
+
+</body>
+</html>
